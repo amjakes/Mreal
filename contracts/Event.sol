@@ -54,7 +54,7 @@ contract EventTicketing is Ownable, ReentrancyGuard {
         return events.length;
     }
 
-    function getEvent(uint256 eventId) external view returns (EventData memory) {
+    function eventDetails(uint256 eventId) external view returns (EventData memory) {
         _event(eventId);
         return events[eventId];
     }
