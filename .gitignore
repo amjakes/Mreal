@@ -5,3 +5,4 @@ dist/
 artifacts/
 cache/
 typechain-types/
+public/contracts.json
