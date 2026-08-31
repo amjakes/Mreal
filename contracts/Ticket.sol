@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {ERC721Enumerable} from '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
+import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 
 /// @title Ticket
 /// @notice Transferable event ticket NFTs minted and redeemed only by EventTicketing.
