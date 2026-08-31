@@ -1,0 +1,5 @@
+{
+  "chainId": 31337,
+  "eventTicketing": { "address": "", "abi": [] },
+  "ticket": { "address": "", "abi": [] }
+}
