@@ -1,136 +1,123 @@
-pragma solidity ^0.4.24;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
 
-import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
-import "./Ticket.sol";
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
+import {MessageHashUtils} from '@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol';
+import {ReentrancyGuard} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import {Ticket} from './Ticket.sol';
 
-/**
- * @title Event contract for creating/managing events
- */
-contract Event is Ownable {
+/// @title EventTicketing
+/// @notice Creates events, sells tickets, verifies ownership proofs, and releases proceeds to hosts.
+contract EventTicketing is Ownable, ReentrancyGuard {
+    using ECDSA for bytes32;
+    using MessageHashUtils for bytes32;
 
-    // For emergency stop
-    bool private stopped = false;
-    
-    // Address of the Ticket contract
-    address public ticketAddress;
-    
     struct EventData {
-        // string name of the event
         string name;
-        // face value price of tickets (in wei)
-        uint price;
-        // total number of tickets offered
-        uint totalTickets;
-        // number of tickets remaining
-        uint remainingTickets;
-        // owner address of the event
-        address owner;
-    }
-    
-    // All events
-    EventData[] public events;
-
-    /**
-     * @dev Called each time an event is created
-     */
-    event EventCreated(uint indexed eventId, address indexed creator);
-
-    /**
-     * @dev Called each time a new ticket is minted (bought directly from event)
-     */
-    event BoughtTicket(uint indexed ticketId, address indexed buyer);
-
-    /**
-     * @dev Called each time a ticket is redeemed
-     */
-    event RedeemedTicket(uint indexed ticketId);
-
-    // Modifiers for emergency stops
-    modifier stopInEmergency() {
-        require(!stopped, "Contract is in emergency stop");
-        _;
-    }
-    // There are no methods that can run during an emergency
-    
-    constructor(address _ticketAddress) public {
-        ticketAddress = _ticketAddress;
+        uint96 price;
+        uint32 totalTickets;
+        uint32 soldTickets;
+        address host;
+        bool active;
     }
 
-    /**
-     * @dev Emergency stop to prevent creation of new events and buying tickets
-     */
-    function toggleEmergencyStop() public onlyOwner {
-        // You can add an additional modifier that restricts stopping a contract to be based on another action, such as a vote of users
-        stopped = !stopped;
-    }
-    
-    /**
-     * @dev Changes the address of the associated Ticket contract
-     * @param _ticketAddress address The new Ticket contract address
-     */
-    function updateTicketAddress(address _ticketAddress) external onlyOwner {
-        ticketAddress = _ticketAddress;
-    }
-    
-    /**
-     * @dev Creates a new event
-     * @param name string String name of event
-     * @param price uint Price in wei of the Tickets
-     * @param totalTickets Total number of tickets for this event
-     * @return uint ID of the newly created event
-     */
-    function createEvent(string name, uint price, uint totalTickets) external stopInEmergency returns (uint) {
-        uint id = events.push(EventData(name, price, totalTickets, totalTickets, msg.sender)) - 1;
-        emit EventCreated(id, msg.sender);
-        return id;
-    }
-    
-    /**
-     * @dev Buy a new ticket from event
-     * @param eventId uint ID of the event to buy a ticket from
-     * @return uint ID of the newly minted ticket
-     */
-    function buyTicket(uint eventId) external stopInEmergency payable returns (uint) {
-        // Event must exist
-        require(events[eventId].owner != 0, "Even does not exist");
+    error EventDoesNotExist();
+    error NotEventHost();
+    error EventIsInactive();
+    error InvalidEventName();
+    error InvalidTicketSupply();
+    error IncorrectPayment();
+    error SoldOut();
+    error EmptyWithdrawal();
+    error TransferFailed();
+    error ProofExpired();
+    error ProofAlreadyUsed();
+    error InvalidTicketOwner();
 
-        // There must be tickets left
-        require(events[eventId].remainingTickets > 0, "There are no remaining tickets");
-        
-        // The payment must be exact to the price of the ticket
-        // This avoids the necessity for refunds (potential reentrancy) or
-        // for withrawal schemes.
-        require(msg.value == events[eventId].price, "Payment did not match event ticket price");
-        
-        // Mint a new ticket
-        Ticket ticketContract = Ticket(ticketAddress);
-        uint ticketId = ticketContract.buy(msg.sender, eventId);
-        
-        // Decrement tickets remaining
-        events[eventId].remainingTickets--;
+    Ticket public immutable ticket;
+    EventData[] private events;
+    mapping(uint256 eventId => uint256 amount) public withdrawableProceeds;
+    mapping(bytes32 proofDigest => bool used) public usedProofs;
 
-        emit BoughtTicket(ticketId, msg.sender);
-        
-        return ticketId;
+    event EventCreated(uint256 indexed eventId, address indexed host, string name, uint256 price, uint256 supply);
+    event TicketPurchased(uint256 indexed eventId, uint256 indexed ticketId, address indexed buyer);
+    event TicketRedeemed(uint256 indexed eventId, uint256 indexed ticketId, address indexed attendee);
+    event ProceedsWithdrawn(uint256 indexed eventId, address indexed host, uint256 amount);
+    event EventStatusChanged(uint256 indexed eventId, bool active);
+
+    constructor() Ownable(msg.sender) {
+        ticket = new Ticket(address(this));
     }
 
-    /**
-    * @dev Redeems the ticket with given id. This would be called after the
-    * event organizer has checked isRedeemable() on the ticket.
-    * @param ticketId uint ID of the ticket to redeem
-    * @param eventId uint ID of the event the ticket belongs to
-    */
-    function redeemTicket(uint ticketId, uint eventId) external stopInEmergency {
-        // The event must exist
-        address owner = events[eventId].owner;
-        require(owner > 0, "The event does not exist");
+    function eventCount() external view returns (uint256) {
+        return events.length;
+    }
 
-        // The caller must be the owner of the event
-        require(msg.sender == owner, "Sender must be the owner of the event");
+    function getEvent(uint256 eventId) external view returns (EventData memory) {
+        _event(eventId);
+        return events[eventId];
+    }
 
-        Ticket ticketContract = Ticket(ticketAddress);
+    function createEvent(string calldata name, uint96 price, uint32 totalTickets) external returns (uint256 eventId) {
+        if (bytes(name).length == 0 || bytes(name).length > 120) revert InvalidEventName();
+        if (totalTickets == 0) revert InvalidTicketSupply();
+        eventId = events.length;
+        events.push(EventData(name, price, totalTickets, 0, msg.sender, true));
+        emit EventCreated(eventId, msg.sender, name, price, totalTickets);
+    }
 
-        // Validation that the ticket belongs to the event happens in Ticket contract
-        ticketContract.redeem(ticketId, eventId);
+    function setEventActive(uint256 eventId, bool active) external {
+        EventData storage eventData = _event(eventId);
+        if (eventData.host != msg.sender) revert NotEventHost();
+        eventData.active = active;
+        emit EventStatusChanged(eventId, active);
+    }
+
+    function buyTicket(uint256 eventId) external payable nonReentrant returns (uint256 ticketId) {
+        EventData storage eventData = _event(eventId);
+        if (!eventData.active) revert EventIsInactive();
+        if (eventData.soldTickets >= eventData.totalTickets) revert SoldOut();
+        if (msg.value != eventData.price) revert IncorrectPayment();
+        eventData.soldTickets += 1;
+        withdrawableProceeds[eventId] += msg.value;
+        ticketId = ticket.mint(msg.sender, eventId);
+        emit TicketPurchased(eventId, ticketId, msg.sender);
+    }
+
+    function redeemTicket(uint256 ticketId, bytes32 challenge, uint256 deadline, bytes calldata signature) external {
+        uint256 eventId = ticket.eventIdOf(ticketId);
+        EventData storage eventData = _event(eventId);
+        if (eventData.host != msg.sender) revert NotEventHost();
+        if (block.timestamp > deadline) revert ProofExpired();
+        bytes32 proofDigest = redemptionDigest(eventId, ticketId, challenge, deadline);
+        if (usedProofs[proofDigest]) revert ProofAlreadyUsed();
+        address signer = proofDigest.toEthSignedMessageHash().recover(signature);
+        if (signer != ticket.ownerOf(ticketId)) revert InvalidTicketOwner();
+        usedProofs[proofDigest] = true;
+        ticket.redeem(ticketId);
+        emit TicketRedeemed(eventId, ticketId, signer);
+    }
+
+    function redemptionDigest(uint256 eventId, uint256 ticketId, bytes32 challenge, uint256 deadline)
+        public view returns (bytes32)
+    {
+        return keccak256(abi.encode(address(this), block.chainid, eventId, ticketId, challenge, deadline));
+    }
+
+    function withdrawProceeds(uint256 eventId) external nonReentrant {
+        EventData storage eventData = _event(eventId);
+        if (eventData.host != msg.sender) revert NotEventHost();
+        uint256 amount = withdrawableProceeds[eventId];
+        if (amount == 0) revert EmptyWithdrawal();
+        withdrawableProceeds[eventId] = 0;
+        (bool sent,) = payable(msg.sender).call{value: amount}('');
+        if (!sent) revert TransferFailed();
+        emit ProceedsWithdrawn(eventId, msg.sender, amount);
+    }
+
+    function _event(uint256 eventId) private view returns (EventData storage eventData) {
+        if (eventId >= events.length) revert EventDoesNotExist();
+        return events[eventId];
     }
 }
