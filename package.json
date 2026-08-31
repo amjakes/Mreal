@@ -14,8 +14,8 @@
     "test:contracts": "hardhat test",
     "compile": "hardhat compile",
     "node": "hardhat node",
-    "deploy:local": "hardhat run scripts/deploy-local.js --network localhost",
-    "deploy:local:inprocess": "hardhat run scripts/deploy-local.js",
+    "deploy:local": "hardhat run scripts/deploy-local.cjs --network localhost",
+    "deploy:local:inprocess": "hardhat run scripts/deploy-local.cjs",
     "clean": "hardhat clean"
   },
   "dependencies": {
