@@ -207,11 +207,10 @@ function addMiddleware(devServer) {
 
     // Listen for the websocket 'upgrade' event and upgrade the connection.
     // If this is not done, httpProxyMiddleware will not try to upgrade until
+    // an initial plain HTTP request is made.
+    devServer.listeningApp.on('upgrade', hpm.upgrade);
   }
-
-  // Finally, by now we have certainly resolved the URL.
-  // It may be /index.html, so let the dev server try serving it again.
-  devServer.use(devServer.middleware);
+dleware);
 }
 
 function runDevServer(host, port, protocol) {
