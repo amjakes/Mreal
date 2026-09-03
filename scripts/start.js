@@ -172,7 +172,10 @@ function addMiddleware(devServer) {
   if (proxy) {
     if (typeof proxy !== 'string') {
       console.log(chalk.red('When specified, "proxy" in package.json must be a string.'));
-      console.log(c
+      console.log(chalk.red('Instead, the type of "proxy" was "' + typeof proxy + '".'));
+      console.log(chalk.red('Either remove "proxy" from package.json, or make it a string.'));
+      process.exit(1);
+    }
 
     // Otherwise, if proxy is specified, we will let it handle any request.
     // There are a few exceptions which we won't send to the proxy:
