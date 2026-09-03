@@ -100,7 +100,11 @@ export default function App() {
       const transaction = await wallet.ticketing.withdrawProceeds(eventId);
       await transaction.wait();
       setNotice('Event proceeds withdrawn to your wallet.');
-    } catch (err
+    } catch (error) {
+      setNotice(error.shortMessage || error.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function createProof(ticket) {
