@@ -22,3 +22,26 @@ function resolveApp(relativePath) {
 // Note that unlike in Node, only *relative* paths from `NODE_PATH` are honored.
 // Otherwise, we risk importing Node.js core modules into an app instead of Webpack shims.
 // https://github.com/facebookincubator/create-react-app/issues/1023#issuecomment-265344421
+
+var nodePaths = (process.env.NODE_PATH || '')
+  .split(process.platform === 'win32' ? ';' : ':')
+  .filter(Boolean)
+  .filter(folder => !path.isAbsolute(folder))
+  .map(resolveApp);
+
+// config after eject: we're in ./config/
+module.exports = {
+  // Changed from build to build_webpack so smart contract compilations are not overwritten.
+  appBuild: resolveApp('build_webpack'),
+  appPublic: resolveApp('public'),
+  appHtml: resolveApp('public/index.html'),
+  appIndexJs: resolveApp('src/index.js'),
+  appPackageJson: resolveApp('package.json'),
+  appSrc: resolveApp('src'),
+  yarnLockFile: resolveApp('yarn.lock'),
+  testsSetup: resolveApp('src/setupTests.js'),
+  appNodeModules: resolveApp('node_modules'),
+  ownNodeModules: resolveApp('node_modules'),
+  drizzleReact: resolveApp('node_modules/drizzle-react'),
+  nodePaths: nodePaths
+};
