@@ -41,13 +41,7 @@ export default function App() {
         return { id, eventId, redeemed: await currentWallet.ticket.isRedeemed(id) };
       }));
       setEvents(loadedEvents);
-      setTickets(loadedTickets);
-    } catch (error) {
-      setNotice(error.shortMessage || error.message);
-    } finally {
-      setBusy(false);
-    }
-  }
+      s
 
   async function onConnect() {
     setBusy(true);
