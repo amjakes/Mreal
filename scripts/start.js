@@ -32,7 +32,13 @@ if (!checkRequiredFiles([paths.appHtml, paths.appIndexJs])) {
 }
 
 // Tools like Cloud9 rely on this.
-var DEFAULT_PORT =e(arg => arg.indexOf('--smoke-test') > -1);
+var DEFAULT_PORT = process.env.PORT || 3000;
+var compiler;
+var handleCompile;
+
+// You can safely remove this after ejecting.
+// We only use this block for testing of Create React App itself:
+var isSmokeTest = process.argv.some(arg => arg.indexOf('--smoke-test') > -1);
 if (isSmokeTest) {
   handleCompile = function (err, stats) {
     if (err || stats.hasErrors() || stats.hasWarnings()) {
