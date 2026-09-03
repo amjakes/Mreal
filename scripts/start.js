@@ -78,7 +78,12 @@ function setupCompiler(host, port, protocol) {
     // options so we are going to "massage" the warnings and errors and present
     // them in a readable focused way.
     var messages = formatWebpackMessages(stats.toJson({}, true));
-    var 
+    var isSuccessful = !messages.errors.length && !messages.warnings.length;
+    var showInstructions = isSuccessful && (isInteractive || isFirstCompile);
+
+    if (isSuccessful) {
+      console.log(chalk.green('Compiled successfully!'));
+    }
 
     if (showInstructions) {
       console.log();
