@@ -103,7 +103,10 @@ function setupCompiler(host, port, protocol) {
       console.log();
       messages.errors.forEach(message => {
         console.log(message);
-        conso
+        console.log();
+      });
+      return;
+    }
 
     // Show warnings if no errors were found.
     if (messages.warnings.length) {
