@@ -198,23 +198,22 @@ function addMiddleware(devServer) {
           proxyReq.setHeader('origin', proxy);
         }
       },
-      onError: oe, httpProxyMiddleware will not try to upgrade until
-    // an initial plain HTTP request is made.
-    devServer.listeningApp.on('upgrade', hpm.upgrade);
+      onError: onProxyError(proxy),
+      secure: false,
+      changeOrigin: true,
+      ws: true
+    });
+    devServer.use(mayProxy, hpm);
+
+    // Listen for the websocket 'upgrade' event and upgrade the connection.
+    // If this is not done, httpProxyMiddleware will not try to upgrade until
   }
 
   // Finally, by now we have certainly resolved the URL.
   // It may be /index.html, so let the dev server try serving it again.
   devServer.use(devServer.middleware);
 }
-
-function runDevServer(host, port, protocol) {
-  var devServer = new WebpackDevServer(compiler, {
-    // Enable gzip compression of generated files.
-    compress: true,
-    // Silence WebpackDevServer's own logs since they're generally not useful.
-    // It will still show compile warnings and errors with this setting.
-    clientLogLevel: 'none',
+ne',
     // By default WebpackDevServer serves physical files from current directory
     // in addition to all the virtual build products that it serves from memory.
     // This is confusing because those files won’t automatically be available in
