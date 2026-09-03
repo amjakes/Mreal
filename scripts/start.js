@@ -123,14 +123,7 @@ function setupCompiler(host, port, protocol) {
     }
   });
 }
-
-// We need to provide a custom onError function for httpProxyMiddleware.
-// It allows us to log custom error messages on the console.
-function onProxyError(proxy) {
-  return function(err, req, res){
-    var host = req.headers && req.headers.host;
-    console.log(
-      chalk.red('Proxy error:') + ' Could not proxy request ' + chalk.cyan(req.url) +
+) + ' Could not proxy request ' + chalk.cyan(req.url) +
       ' from ' + chalk.cyan(host) + ' to ' + chalk.cyan(proxy) + '.'
     );
     console.log(
