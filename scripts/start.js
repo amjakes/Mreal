@@ -159,7 +159,14 @@ function addMiddleware(devServer) {
     // See https://github.com/facebookincubator/create-react-app/issues/387.
     disableDotRule: true,
     // For single page apps, we generally want to fallback to /index.html.
-    // However we also want to respe
+    // However we also want to respect `proxy` for API calls.
+    // So if `proxy` is specified, we need to decide which fallback to use.
+    // We use a heuristic: if request `accept`s text/html, we pick /index.html.
+    // Modern browsers include text/html into `accept` header when navigating.
+    // However API calls like `fetch()` won’t generally accept text/html.
+    // If this heuristic doesn’t work well for you, don’t use `proxy`.
+    htmlAcceptHeaders: proxy ?
+      ['text/html'] :
       ['text/html', '*/*']
   }));
   if (proxy) {
