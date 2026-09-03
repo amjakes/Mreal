@@ -294,15 +294,7 @@ detect(DEFAULT_PORT).then(port => {
   if (port === DEFAULT_PORT) {
     run(port);
     return;
-  }
-
-  if (isInteractive) {
-    clearConsole();
-    var existingProcess = getProcessForPort(DEFAULT_PORT);
-    var question =
-      chalk.yellow('Something is already running on port ' + DEFAULT_PORT + '.' +
-        ((existingProcess) ? ' Probably:\n  ' + existingProcess : '')) +
-        '\n\nWould you like to run the app on another port instead?';
+  }to run the app on another port instead?';
 
     prompt(question, true).then(shouldChangePort => {
       if (shouldChangePort) {
