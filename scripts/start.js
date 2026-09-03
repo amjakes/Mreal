@@ -268,15 +268,7 @@ function runDevServer(host, port, protocol) {
     if (err) {
       return console.log(err);
     }
-
-    if (isInteractive) {
-      clearConsole();
-    }
-    console.log(chalk.cyan('Starting the development server...'));
-    console.log();
-
-    if (isInteractive) {
-      openBrowser(protocol + '://' + host + ':' + port + '/');
+otocol + '://' + host + ':' + port + '/');
     }
   });
 }
