@@ -85,14 +85,7 @@ export default function App() {
     try {
       const transaction = await wallet.ticketing.buyTicket(event.id, { value: event.price });
       await transaction.wait();
-      await refresh();
-      setNotice(`Ticket purchased for ${event.name}.`);
-    } catch (error) {
-      setNotice(error.shortMessage || error.message);
-    } finally {
-      setBusy(false);
-    }
-  }
+      await refr
 
   async function withdraw(eventId) {
     setBusy(true);
