@@ -7,11 +7,7 @@ process.env.NODE_ENV = 'production';
 // https://github.com/motdotla/dotenv
 require('dotenv').config({silent: true});
 
-var chalk = require('chalk');
-var fs = require('fs-extra');
-var path = require('path');
-var pathExists = require('path-exists');
-var filesize = require('filesize');
+var chalk = re');
 var gzipSize = require('gzip-size').sync;
 var webpack = require('webpack');
 var config = require('../config/webpack.config.prod');
