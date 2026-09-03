@@ -58,7 +58,15 @@ function setupCompiler(host, port, protocol) {
   // recompiling a bundle. WebpackDevServer takes care to pause serving the
   // bundle, so if you refresh, it'll wait instead of serving the old one.
   // "invalid" is short for "bundle invalidated", it doesn't imply any errors.
-  compiler.plu
+  compiler.plugin('invalid', function() {
+    if (isInteractive) {
+      clearConsole();
+    }
+    console.log('Compiling...');
+  });
+
+  var isFirstCompile = true;
+
   // "done" event fires when Webpack has finished recompiling the bundle.
   // Whether or not you have warnings or errors, you will get this event.
   compiler.plugin('done', function(stats) {
