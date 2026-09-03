@@ -1,11 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const hre = require('hardhat');
-
-async function main() {
-  const EventTicketing = await hre.ethers.getContractFactory('EventTicketing');
-  const ticketing = await EventTicketing.deploy();
-  await ticketing.waitForDeployment();
+loyment();
   const ticketAddress = await ticketing.ticket();
   const network = await hre.ethers.provider.getNetwork();
 
