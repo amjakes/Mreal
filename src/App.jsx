@@ -28,14 +28,7 @@ export default function App() {
   async function refresh(currentWallet = wallet) {
     if (!currentWallet) return;
     setBusy(true);
-    try {
-      const count = Number(await currentWallet.ticketing.eventCount());
-      const loadedEvents = await Promise.all([...Array(count).keys()].map(async (id) => {
-        const data = await currentWallet.ticketing.eventDetails(id);
-        return { id, ...data };
-      }));
-      const balance = Number(await currentWallet.ticket.balanceOf(currentWallet.account));
-      const loadedTickets = await Promise.all([...Array(balance).keys()].map(async (index) => {
+    try {await Promise.all([...Array(balance).keys()].map(async (index) => {
         const id = Number(await currentWallet.ticket.tokenOfOwnerByIndex(currentWallet.account, index));
         const eventId = Number(await currentWallet.ticket.eventIdOf(id));
         return { id, eventId, redeemed: await currentWallet.ticket.isRedeemed(id) };
