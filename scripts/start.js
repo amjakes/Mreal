@@ -97,10 +97,6 @@ function setupCompiler(host, port, protocol) {
       isFirstCompile = false;
     }
 
-    // If errors exist, only show errors.
-    if (messages.errors.length) {
-      console.log(chalk.red('Failed to compile.'));
-      console.log();
       messages.errors.forEach(message => {
         console.log(message);
         console.log();
