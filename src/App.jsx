@@ -68,15 +68,7 @@ export default function App() {
     if (!wallet) return;
     setBusy(true);
     try {
-      const transaction = await wallet.ticketing.createEvent(form.name.trim(), ethers.parseEther(form.price), Number(form.supply));
-      await transaction.wait();
-      setForm({ name: '', price: '0.01', supply: '10' });
-      await refresh();
-      setNotice('Event created.');
-    } catch (error) {
-      setNotice(error.shortMessage || error.message);
-    } finally {
-      setBusy(false);
+      const tra
     }
   }
 
