@@ -5,7 +5,19 @@ import { connectWallet, loadDeployment } from './lib/contracts.js';
 const shortAddress = (address) => address ? `${address.slice(0, 6)}…${address.slice(-4)}` : '';
 const formatPrice = (price) => ethers.formatEther(price);
 
-export default loyment).catch((error) => setNotice(error.message));
+export default function App() {
+  const [deployment, setDeployment] = useState(null);
+  const [wallet, setWallet] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [tickets, setTickets] = useState([]);
+  const [notice, setNotice] = useState('Load the local deployment, then connect a wallet.');
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({ name: '', price: '0.01', supply: '10' });
+  const [proof, setProof] = useState('');
+  const [createdProof, setCreatedProof] = useState('');
+
+  useEffect(() => {
+    loadDeployment().then(setDeployment).catch((error) => setNotice(error.message));
   }, []);
 
   const myEvents = useMemo(
