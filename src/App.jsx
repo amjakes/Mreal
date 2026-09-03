@@ -151,7 +151,15 @@ export default function App() {
         <input required min="0" step="0.000001" type="number" placeholder="Price in ETH" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
         <input required min="1" max="4294967295" type="number" placeholder="Ticket supply" value={form.supply} onChange={(e) => setForm({ ...form, supply: e.target.value })} />
         <button disabled={busy}>Create event</button>
-      </for : <p className="muted">No tickets in this wallet.</p>}</div>
+      </form></section>
+      <section><h2>Available events</h2><div className="grid">{events.map((event) => <article className="card" key={event.id}>
+        <p className="eyebrow">EVENT #{event.id}</p><h3>{event.name}</h3><p>{formatPrice(event.price)} ETH · {Number(event.totalTickets) - Number(event.soldTickets)} remaining</p>
+        <p className="muted">Host: {shortAddress(event.host)}</p><button disabled={busy || !event.active || Number(event.soldTickets) >= Number(event.totalTickets)} onClick={() => buy(event)}>Buy ticket</button>
+      </article>)}</div></section>
+      <section><h2>My tickets</h2><div className="grid">{tickets.length ? tickets.map((ticket) => <article className="card" key={ticket.id}>
+        <p className="eyebrow">TICKET #{ticket.id}</p><h3>{events.find((event) => event.id === ticket.eventId)?.name || `Event #${ticket.eventId}`}</h3><p>{ticket.redeemed ? 'Redeemed' : 'Active'}</p>
+        {!ticket.redeemed && <button disabled={busy} onClick={() => createProof(ticket)}>Create entry proof</button>}
+      </article>) : <p className="muted">No tickets in this wallet.</p>}</div>
       {createdProof && <><h3>Entry proof</h3><textarea readOnly value={createdProof} /></>}</section>
       <section className="panel"><h2>Host tools</h2><p>Paste an attendee’s entry proof. Proofs expire after five minutes and can only be redeemed once.</p>
         <textarea placeholder="Entry proof JSON" value={proof} onChange={(e) => setProof(e.target.value)} /><button disabled={busy || !proof} onClick={redeem}>Redeem proof</button>
