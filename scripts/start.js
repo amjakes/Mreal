@@ -198,15 +198,7 @@ function addMiddleware(devServer) {
           proxyReq.setHeader('origin', proxy);
         }
       },
-      onError: onProxyError(proxy),
-      secure: false,
-      changeOrigin: true,
-      ws: true
-    });
-    devServer.use(mayProxy, hpm);
-
-    // Listen for the websocket 'upgrade' event and upgrade the connection.
-    // If this is not done, httpProxyMiddleware will not try to upgrade until
+      onError: oe, httpProxyMiddleware will not try to upgrade until
     // an initial plain HTTP request is made.
     devServer.listeningApp.on('upgrade', hpm.upgrade);
   }
