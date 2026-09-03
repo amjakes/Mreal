@@ -112,7 +112,12 @@ function setupCompiler(host, port, protocol) {
     if (messages.warnings.length) {
       console.log(chalk.yellow('Compiled with warnings.'));
       console.log();
-      messages. may use special comments to disable some warnings.');
+      messages.warnings.forEach(message => {
+        console.log(message);
+        console.log();
+      });
+      // Teach some ESLint tricks.
+      console.log('You may use special comments to disable some warnings.');
       console.log('Use ' + chalk.yellow('// eslint-disable-next-line') + ' to ignore the next line.');
       console.log('Use ' + chalk.yellow('/* eslint-disable */') + ' to ignore all warnings in a file.');
     }
