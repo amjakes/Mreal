@@ -11,4 +11,9 @@ describe('frontend build configuration', () => {
     expect(index).toContain('/src/main.jsx');
   });
 
+  it('ships a deployment configuration template', () => {
+    const template = JSON.parse(fs.readFileSync(path.join(root, 'public', 'contracts.example.json'), 'utf8'));
+    expect(template.chainId).toBe(31337);
+    expect(template.eventTicketing.address).toBe('');
+  });
 });
