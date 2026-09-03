@@ -23,7 +23,4 @@ async function main() {
   console.log(`Frontend configuration written to ${output}`);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main().ca
