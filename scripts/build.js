@@ -20,11 +20,6 @@ var checkRequiredFiles = require('react-dev-utils/checkRequiredFiles');
 var recursive = require('recursive-readdir');
 var stripAnsi = require('strip-ansi');
 
-var useYarn = pathExists.sync(paths.yarnLockFile);
-
-// Warn and crash if required files are missing
-if (!checkRequiredFiles([paths.appHtml, paths.appIndexJs])) {
-  process.exit(1);
 }
 
 // Input: /User/dan/app/build/static/js/main.82be8.js
