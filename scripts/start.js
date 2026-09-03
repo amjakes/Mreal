@@ -216,16 +216,7 @@ function addMiddleware(devServer) {
   devServer.use(devServer.middleware);
 }
 
-function runDevServer(host, port, protocol) {
-  var devServer = new WebpackDevServer(compiler, {
-    // Enable gzip compression of generated files.
-    compress: true,
-    // Silence WebpackDevServer's own logs since they're generally not useful.
-    // It will still show compile warnings and errors with this setting.
-    clientLogLevel: 'none',
-    // By default WebpackDevServer serves physical files from current directory
-    // in addition to all the virtual build products that it serves from memory.
-    // This is confusing because those files won’t automatically be available in
+function runDevServer(hosthose files won’t automatically be available in
     // production build folder unless we copy them. However, copying the whole
     // project directory is dangerous because we may expose sensitive files.
     // Instead, we establish a convention that only files in `public` directory
