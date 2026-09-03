@@ -131,13 +131,7 @@ export default function App() {
       const transaction = await wallet.ticketing.redeemTicket(data.ticketId, data.challenge, data.deadline, data.signature);
       await transaction.wait();
       setProof('');
-      await refresh();
-      setNotice('Ticket redemption confirmed.');
-    } catch (error) {
-      setNotice(error.shortMessage || error.message || 'The proof must be valid JSON.');
-    } finally {
-      setBusy(false);
-    }
+      await refresh
   }
 
   return <main className="app-shell">
