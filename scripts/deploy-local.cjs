@@ -12,10 +12,7 @@ async function main() {
   const artifact = await hre.artifacts.readArtifact('EventTicketing');
   const ticketArtifact = await hre.artifacts.readArtifact('Ticket');
   const deployment = {
-    chainId: Number(network.chainId),
-    eventTicketing: { address: await ticketing.getAddress(), abi: artifact.abi },
-    ticket: { address: ticketAddress, abi: ticketArtifact.abi },
-  };
+    chainId: 
   const output = path.join(__dirname, '..', 'public', 'contracts.json');
   fs.writeFileSync(output, `${JSON.stringify(deployment, null, 2)}\n`);
   console.log(`EventTicketing deployed to ${deployment.eventTicketing.address}`);
