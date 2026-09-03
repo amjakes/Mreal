@@ -113,7 +113,15 @@ export default function App() {
       const challenge = ethers.hexlify(ethers.randomBytes(32));
       const latest = await wallet.provider.getBlock('latest');
       const deadline = BigInt(latest.timestamp + 300);
-      const digest = awai
+      const digest = await wallet.ticketing.redemptionDigest(ticket.eventId, ticket.id, challenge, deadline);
+      const signature = await wallet.signer.signMessage(ethers.getBytes(digest));
+      setCreatedProof(JSON.stringify({ ticketId: ticket.id, challenge, deadline: deadline.toString(), signature }));
+      setNotice('Proof created. Share it with the event host before it expires.');
+    } catch (error) {
+      setNotice(error.shortMessage || error.message);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function redeem() {
