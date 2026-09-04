@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ethers } from 'ethers';
+import QRCode from 'qrcode';
 import { connectWallet, loadDeployment } from './lib/contracts.js';
 
 const shortAddress = (address) => address ? `${address.slice(0, 6)}…${address.slice(-4)}` : '';
@@ -14,7 +15,8 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: '', price: '0.01', supply: '10' });
   const [proof, setProof] = useState('');
-  const [createdProof, setCreatedProof] = useState('');
+  const [createdProof, setCreatedProof] = useState(null);
+  const [page, setPage] = useState('discover');
 
   useEffect(() => {
     loadDeployment().then(setDeployment).catch((error) => setNotice(error.message));
@@ -115,7 +117,9 @@ export default function App() {
       const deadline = BigInt(latest.timestamp + 300);
       const digest = await wallet.ticketing.redemptionDigest(ticket.eventId, ticket.id, challenge, deadline);
       const signature = await wallet.signer.signMessage(ethers.getBytes(digest));
-      setCreatedProof(JSON.stringify({ ticketId: ticket.id, challenge, deadline: deadline.toString(), signature }));
+      const value = JSON.stringify({ ticketId: ticket.id, challenge, deadline: deadline.toString(), signature });
+      const qr = await QRCode.toDataURL(value, { width: 300, margin: 1 });
+      setCreatedProof({ value, qr, ticket });
       setNotice('Proof created. Share it with the event host before it expires.');
     } catch (error) {
       setNotice(error.shortMessage || error.message);
@@ -141,30 +145,30 @@ export default function App() {
   }
 
   return <main className="app-shell">
-    <header><div><p className="eyebrow">LOCAL BLOCKCHAIN TICKETING</p><h1>ChainPass</h1></div>
-      <button disabled={!deployment || busy} onClick={onConnect}>{wallet ? shortAddress(wallet.account) : 'Connect wallet'}</button>
+    <header><div><p className="eyebrow">EVENTS, OWNED BY YOU</p><h1>ChainPass</h1></div>
+      {wallet && <nav className="app-nav"><button className={page === 'discover' ? 'active' : ''} onClick={() => setPage('discover')}>Discover</button><button className={page === 'tickets' ? 'active' : ''} onClick={() => setPage('tickets')}>My tickets</button><button className={page === 'host' ? 'active' : ''} onClick={() => setPage('host')}>Host dashboard</button></nav>}
+      <button disabled={!deployment || busy} onClick={wallet ? () => { setWallet(null); setTickets([]); setNotice('Wallet disconnected.'); } : onConnect}>{wallet ? shortAddress(wallet.account) : 'Connect wallet'}</button>
     </header>
     <p className="notice" role="status">{notice}</p>
-    {!wallet ? <section className="panel"><h2>Local setup</h2><p>Start the chain, deploy the contracts, add Local Hardhat to MetaMask, then connect.</p><code>npm run node · npm run deploy:local · npm run dev</code></section> : <>
-      <section className="panel"><h2>Create an event</h2><form onSubmit={submitEvent}>
+    {!wallet ? <section className="hero-panel"><div><p className="eyebrow">WELCOME TO CHAINPASS</p><h2>Discover experiences worth <em>showing up for.</em></h2><p>Find local moments, own your ticket, and arrive ready. Blockchain stays in the background—your next memory takes centre stage.</p><button disabled={!deployment || busy} onClick={onConnect}>Connect to explore →</button><div className="hero-points"><span>⌁ Built for real moments</span><span>◈ Your ticket, your wallet</span></div></div><div className="hero-ticket"><small>CHAINPASS PRESENTS</small><strong>MAKE<br />A MEMORY</strong><small>EVENT TICKETING · 2026</small></div></section> : <>
+      {page === 'host' && <section className="panel host-create"><p className="eyebrow">HOST CENTER</p><h2>Create an event</h2><p>Bring people together. Ticket sales and ownership are secured on-chain.</p><form onSubmit={submitEvent}>
         <input required maxLength="120" placeholder="Event name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input required min="0" step="0.000001" type="number" placeholder="Price in ETH" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
         <input required min="1" max="4294967295" type="number" placeholder="Ticket supply" value={form.supply} onChange={(e) => setForm({ ...form, supply: e.target.value })} />
         <button disabled={busy}>Create event</button>
-      </form></section>
-      <section><h2>Available events</h2><div className="grid">{events.map((event) => <article className="card" key={event.id}>
+      </form></section>}
+      {page === 'discover' && <section><div className="section-head"><div><p className="eyebrow">EXPLORE</p><h2>Events around you</h2></div><span>{events.length} events found</span></div><div className="grid">{events.map((event) => <article className="card" key={event.id}>
         <p className="eyebrow">EVENT #{event.id}</p><h3>{event.name}</h3><p>{formatPrice(event.price)} ETH · {Number(event.totalTickets) - Number(event.soldTickets)} remaining</p>
         <p className="muted">Host: {shortAddress(event.host)}</p><button disabled={busy || !event.active || Number(event.soldTickets) >= Number(event.totalTickets)} onClick={() => buy(event)}>Buy ticket</button>
-      </article>)}</div></section>
-      <section><h2>My tickets</h2><div className="grid">{tickets.length ? tickets.map((ticket) => <article className="card" key={ticket.id}>
+      </article>)}</div>{!events.length && <div className="empty-state"><strong>No events found</strong><p>Be the first to host an experience.</p></div>}</section>}
+      {page === 'tickets' && <section><div className="section-head"><div><p className="eyebrow">YOUR COLLECTION</p><h2>My tickets</h2></div><span>Ready for the door</span></div><div className="grid">{tickets.length ? tickets.map((ticket) => <article className="card" key={ticket.id}>
         <p className="eyebrow">TICKET #{ticket.id}</p><h3>{events.find((event) => event.id === ticket.eventId)?.name || `Event #${ticket.eventId}`}</h3><p>{ticket.redeemed ? 'Redeemed' : 'Active'}</p>
         {!ticket.redeemed && <button disabled={busy} onClick={() => createProof(ticket)}>Create entry proof</button>}
       </article>) : <p className="muted">No tickets in this wallet.</p>}</div>
-      {createdProof && <><h3>Entry proof</h3><textarea readOnly value={createdProof} /></>}</section>
-      <section className="panel"><h2>Host tools</h2><p>Paste an attendee’s entry proof. Proofs expire after five minutes and can only be redeemed once.</p>
+      {createdProof && <div className="proof-card"><img src={createdProof.qr} alt="Ticket entry proof QR code" /><div><p className="eyebrow">ENTRY PROOF READY</p><h3>You're on the list.</h3><p>Show this proof to the host. It expires in five minutes.</p><button onClick={() => navigator.clipboard?.writeText(createdProof.value)}>Copy entry proof</button></div></div>}</section>}
+      {page === 'host' && <section className="panel host-tools"><p className="eyebrow">DOOR MODE</p><h2>Validate an entry</h2><p>Paste an attendee’s signed proof to verify ownership and redeem their ticket.</p>
         <textarea placeholder="Entry proof JSON" value={proof} onChange={(e) => setProof(e.target.value)} /><button disabled={busy || !proof} onClick={redeem}>Redeem proof</button>
-        <div className="host-events">{myEvents.map((event) => <button key={event.id} disabled={busy} onClick={() => withdraw(event.id)}>Withdraw event #{event.id} proceeds</button>)}</div>
-      </section>
+      <div className="host-events">{myEvents.length ? myEvents.map((event) => <button key={event.id} disabled={busy} onClick={() => withdraw(event.id)}>Withdraw {event.name} proceeds</button>) : <p>You have not hosted an event yet.</p>}</div></section>}
     </>}
   </main>;
 }
