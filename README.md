@@ -1,6 +1,6 @@
-# ChainPass Ticketing
+# Mreal
 
-ChainPass is a local-first Ethereum ticketing demonstration. Event hosts create
+Mreal is a local-first Ethereum ticketing demonstration. Event hosts create
 events and sell ERC-721 tickets. Ticket holders create a short-lived ownership
 proof, which the host submits to redeem the ticket at entry.
 
