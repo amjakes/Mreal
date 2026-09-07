@@ -5,6 +5,14 @@ import { connectWallet, loadDeployment } from './lib/contracts.js';
 
 const shortAddress = (address) => address ? `${address.slice(0, 6)}…${address.slice(-4)}` : '';
 const formatPrice = (price) => ethers.formatEther(price);
+const friendlyError = (error) => {
+  const message = error?.shortMessage || error?.message || 'Unable to connect. Please try again.';
+  if (/user rejected|action_rejected/i.test(message)) return 'Wallet connection was cancelled.';
+  if (/install a wallet|window\.ethereum/i.test(message)) return 'Install MetaMask, then refresh this page.';
+  if (/chain 31337|wrong network/i.test(message)) return 'Switch MetaMask to Local Hardhat (chain ID 31337), then reconnect.';
+  if (/failed to fetch|network error|ECONNREFUSED/i.test(message)) return 'Local Hardhat is unavailable. Start npm run node, then run npm run deploy:local.';
+  return message;
+};
 
 export default function App() {
   const [deployment, setDeployment] = useState(null);
@@ -45,7 +53,7 @@ export default function App() {
       setEvents(loadedEvents);
       setTickets(loadedTickets);
     } catch (error) {
-      setNotice(error.shortMessage || error.message);
+      setNotice(friendlyError(error));
     } finally {
       setBusy(false);
     }
@@ -59,7 +67,7 @@ export default function App() {
       await refresh(connected);
       setNotice(`Connected as ${shortAddress(connected.account)}.`);
     } catch (error) {
-      setNotice(error.shortMessage || error.message);
+      setNotice(friendlyError(error));
     } finally {
       setBusy(false);
     }
@@ -150,7 +158,7 @@ export default function App() {
       <button disabled={!deployment || busy} onClick={wallet ? () => { setWallet(null); setTickets([]); setNotice('Wallet disconnected.'); } : onConnect}>{wallet ? shortAddress(wallet.account) : 'Connect wallet'}</button>
     </header>
     <p className="notice" role="status">{notice}</p>
-    {!wallet ? <section className="hero-panel"><div><p className="eyebrow">WELCOME TO MREAL</p><h2>Discover experiences worth <em>showing up for.</em></h2><p>Find local moments, own your ticket, and arrive ready. Blockchain stays in the background—your next memory takes centre stage.</p><button disabled={!deployment || busy} onClick={onConnect}>Connect to explore →</button><div className="hero-points"><span>⌁ Built for real moments</span><span>◈ Your ticket, your wallet</span></div></div><div className="hero-ticket-stage"><div className="hero-ticket"><div className="hero-ticket__face hero-ticket__front"><small>MREAL PRESENTS</small><strong>MAKE<br />A MEMORY</strong><small>EVENT TICKETING · 2026</small></div><div className="hero-ticket__face hero-ticket__back"><img src="/mreal-logo.jpg" alt="" /><span>MREAL</span><small>ONE TICKET · EVERY EXPERIENCE</small><div className="ticket-lines" /></div></div></div></section> : <>
+    {!wallet ? <section className="hero-panel"><div><p className="eyebrow">WELCOME TO MREAL</p><h2>Discover experiences worth <em>showing up for.</em></h2><p>Find local moments, own your ticket, and arrive ready. Blockchain stays in the background—your next memory takes centre stage.</p><button disabled={!deployment || busy} onClick={onConnect}>Connect to explore →</button><div className="hero-points"><span>⌁ Built for real moments</span><span>◈ Your ticket, your wallet</span></div></div><div className="hero-ticket-stage"><div className="hero-ticket"><div className="hero-ticket__face hero-ticket__front"><small>MREAL PRESENTS</small><strong>CONFIDENCE<br />IN EVERY CLICK.</strong><small>USALAMA WAKO GUARANTEED</small></div><div className="hero-ticket__face hero-ticket__back"><img src="/mreal-logo.jpg" alt="" /><span>MREAL</span><small>ONE TICKET · EVERY EXPERIENCE</small><div className="ticket-lines" /></div></div><div className="hero-ticket-shadow" /></div></section> : <>
       {page === 'host' && <section className="panel host-create"><p className="eyebrow">HOST CENTER</p><h2>Create an event</h2><p>Bring people together. Ticket sales and ownership are secured on-chain.</p><form onSubmit={submitEvent}>
         <input required maxLength="120" placeholder="Event name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input required min="0" step="0.000001" type="number" placeholder="Price in ETH" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
