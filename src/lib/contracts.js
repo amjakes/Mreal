@@ -6,7 +6,13 @@ export async function loadDeployment() {
   const deployment = await response.json();
   if (!deployment.eventTicketing?.address) {
     throw new Error('Contract configuration is empty. Run npm run deploy:local first.');
-  } BrowserProvider(window.ethereum);
+  }
+  return deployment;
+}
+
+export async function connectWallet(deployment) {
+  if (!window.ethereum) throw new Error('Install a wallet such as MetaMask to use this application.');
+  const provider = new BrowserProvider(window.ethereum);
   await provider.send('eth_requestAccounts', []);
   const network = await provider.getNetwork();
   if (Number(network.chainId) !== deployment.chainId) {
