@@ -13,7 +13,9 @@ export async function loadDeployment() {
 export async function connectWallet(deployment) {
   if (!window.ethereum) throw new Error('Install a wallet such as MetaMask to use this application.');
   const provider = new BrowserProvider(window.ethereum);
-  await provider.se deployment.chainId) {
+  await provider.send('eth_requestAccounts', []);
+  const network = await provider.getNetwork();
+  if (Number(network.chainId) !== deployment.chainId) {
     throw new Error(`Switch your wallet to chain ${deployment.chainId} and reconnect.`);
   }
   const signer = await provider.getSigner();
